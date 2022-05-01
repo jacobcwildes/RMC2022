@@ -33,10 +33,10 @@ servo = m.Controller()
 
 while (readyForInstructions):
 	readInstructions()
-	if (instruction == "goToDump") driveTo("dump")
-	elif (instruction == "goToDrop") driveTo("dump")
-	elif (instruction == "dump") dump()
-	elif (instruction == "dig") dig()
+	if (instruction == "goToDump"): driveTo("dump")
+	elif (instruction == "goToDrop"): driveTo("drop")
+	elif (instruction == "dump"): dump()
+	elif (instruction == "dig"): dig()
 	
 #major function-------------------------------------------------------	
 
