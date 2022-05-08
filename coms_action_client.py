@@ -1,4 +1,4 @@
-#import maestro as m
+import maestro as m
 import time
 import rclpy
 from rclpy.action import ActionClient
@@ -6,11 +6,23 @@ from rclpy.node import Node
 
 from communication_interface.action import Coms
 
+servo = m.Controller()
+
+#----------------
+#motor map      |
+#----------------
+#right drive = 0|
+#leftdrive = 1  |
+#boom = 2       |
+##chain = 3     |
+#dumper = 4     |
+#----------------
+
 #fluid vars
 maxSpeed = 0
 direction = ""
 readyForInstructions = True
-client_instructions = "driveToDump"
+client_instructions = "driveToDig"
 
 #static speed vars
 base = 6000
@@ -45,7 +57,7 @@ def dig():
 #minor movement functions-----------------------------------------------------
 
 def alignWithDropOff():
-        #setSlow()
+        setSlow()
         #just temp until lidar works
         leftward()
         time.sleep(1)
@@ -75,17 +87,6 @@ def navigate(dir):
 
 #setters and getters -------------------------------------------------------
 
-def readInstructions():
-        #temp unitl ros is set up
-        #somehow grab listeners 
-        client_instructions = "dig"
-
-def startAction():
-        readyForInstructions = False
-
-def doneAction():
-        readyForInstructions = True	
-
 def setSlow():
         setSpeed("fine")
 def setFast():
@@ -107,49 +108,49 @@ def setSpeed(degree):
 
 def forward():
     print("forward")
-    #servo.setTarget(0,base - maxSpeed);
-    #servo.setTarget(1,base + maxSpeed);  
+    servo.setTarget(0,base - maxSpeed);
+    servo.setTarget(1,base + maxSpeed);  
 def backward():
     print("backward")
-    #servo.setTarget(0,base + maxSpeed);
-    #servo.setTarget(1,base - maxSpeed);
+    servo.setTarget(0,base + maxSpeed);
+    servo.setTarget(1,base - maxSpeed);
 def leftward():
     print("leftward")
-    #servo.setTarget(1,base - maxSpeed);
-    #servo.setTarget(0,base - maxSpeed);
+    servo.setTarget(1,base - maxSpeed);
+    servo.setTarget(0,base - maxSpeed);
 def rightward():
     print("rightward")
-    #servo.setTarget(0,base + maxSpeed);
-    #servo.setTarget(1,base + maxSpeed);
+    servo.setTarget(0,base + maxSpeed);
+    servo.setTarget(1,base + maxSpeed);
 def boomUp():
     print("boomUp")
-    #servo.setTarget(2,base-boom);
+    servo.setTarget(2,base-boom);
 def boomDown():
     print("boomDown")
-    #servo.setTarget(2,base+boom);
+    servo.setTarget(2,base+boom);
 def chainGo():
     print("chainGo")
-    #servo.setTarget(3,base-chain);
+    servo.setTarget(3,base-chain);
 def chainStop():
     print("chainStop")
-    #servo.setTarget(3,base);    
+    servo.setTarget(3,base);    
 def brake():
     print("brake")
-    #servo.setTarget(0,base);
-    #servo.setTarget(1,base);
+    servo.setTarget(0,base);
+    servo.setTarget(1,base);
 def dumperDump():
     print("dumperDump")
-    #servo.setTarget(4,base-dump);
+    servo.setTarget(4,base-dump);
 def dumperReturn():
     print("dumperReturn")
-    #servo.setTarget(4,base+dump);    
+    servo.setTarget(4,base+dump);    
 def reset():
     print("reset")
-    #servo.setTarget(0,base);
-    #servo.setTarget(1,base);
-    #servo.setTarget(2,base);
-    #servo.setTarget(3,base);
-    #servo.setTarget(4,base);
+    servo.setTarget(0,base);
+    servo.setTarget(1,base);
+    servo.setTarget(2,base);
+    servo.setTarget(3,base);
+    servo.setTarget(4,base);
 
 
 #-----------------------------------------------------------------
@@ -195,11 +196,11 @@ class ComsActionClient(Node):
         if(navi == "dump"): dump()
         elif(navi == "dig"): dig()
         elif(navi == "driveToDig"): 
-                #setFast();
+                setFast();
                 print("setdirdig")
                 direction = "dig"
         elif(navi == "driveToDump"): 
-                #setFast();
+                setFast();
                 print("setdirdump")
                 direction = "dump"
         elif(navi == "advance"): 
@@ -218,16 +219,29 @@ class ComsActionClient(Node):
 
 def main(args=None):
     reset()
+    client_instructions = "driveToDig"
     
-    rclpy.init(args=args)
+    while (True):
+        rclpy.init(args=args)
 
-    action_client = ComsActionClient()
+        action_client = ComsActionClient()
+        
+        print("Sending Goal...")
+        
+        action_client.send_goal(client_instructions)
 
-    #readInstructions()
+        rclpy.spin(action_client)
     
-    action_client.send_goal(client_instructions)
-
-    rclpy.spin(action_client)
+        print("Finished Executing...")
+        
+        time.sleep(5)
+        
+        if(client_instructions == "driveToDig") : client_instructions = "dig"
+        elif(client_instructions == "dig") : client_instructions = "driveToDump"
+        elif(client_instructions == "driveToDump") : client_instructions = "dump"
+        elif(client_instructions == "dump") : client_instructions = "driveToDig"
+       
+    
 
 
 if __name__ == '__main__':
